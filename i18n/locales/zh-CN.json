@@ -109,8 +109,8 @@
       "docs": "文档",
       "fund": "资助"
     },
-    "install": {
-      "title": "安装",
+    "get_started": {
+      "title": "开始使用",
       "pm_label": "包管理器",
       "copy_command": "复制安装命令",
       "view_types": "查看 {package}"
