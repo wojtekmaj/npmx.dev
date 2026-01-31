@@ -85,7 +85,7 @@ onKeyStroke(
       <!-- End: User status + GitHub -->
       <div
         :class="{ 'hidden sm:flex': showFullSearch }"
-        class="flex-shrink-0 flex flex-wrap flex-1 items-center gap-y-1 sm:gap-3 ms-auto sm:ms-0"
+        class="flex-1 flex flex-wrap items-center justify-end sm:gap-3 ms-auto sm:ms-0"
       >
         <NuxtLink
           to="/about"
