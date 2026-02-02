@@ -72,14 +72,6 @@ export const FACET_INFO: Record<ComparisonFacet, Omit<FacetInfo, 'id'>> = {
   },
 }
 
-export function getFacetLabelKey(facet: ComparisonFacet): string {
-  return `compare.facets.items.${facet}.label`
-}
-
-export function getFacetDescriptionKey(facet: ComparisonFacet): string {
-  return `compare.facets.items.${facet}.description`
-}
-
 /** All facets in display order */
 export const ALL_FACETS: ComparisonFacet[] = Object.keys(FACET_INFO) as ComparisonFacet[]
 
