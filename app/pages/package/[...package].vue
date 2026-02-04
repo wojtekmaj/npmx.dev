@@ -2,6 +2,7 @@
 import type {
   NpmVersionDist,
   PackumentVersion,
+  ProvenanceDetails,
   ReadmeResponse,
   SkillsListResponse,
 } from '#shared/types'
@@ -157,6 +158,39 @@ const { data: vulnTree, status: vulnTreeStatus } = useDependencyAnalysis(
   packageName,
   () => resolvedVersion.value ?? '',
 )
+
+const {
+  data: provenanceData,
+  status: provenanceStatus,
+  execute: fetchProvenance,
+} = useLazyFetch<ProvenanceDetails | null>(
+  () => {
+    const v = displayVersion.value
+    if (!v || !hasProvenance(v)) return ''
+    return `/api/registry/provenance/${packageName.value}/v/${v.version}`
+  },
+  {
+    default: () => null,
+    server: false,
+    immediate: false,
+  },
+)
+if (import.meta.client) {
+  watch(
+    displayVersion,
+    v => {
+      if (v && hasProvenance(v) && provenanceStatus.value === 'idle') {
+        fetchProvenance()
+      }
+    },
+    { immediate: true },
+  )
+}
+
+const provenanceBadgeMounted = shallowRef(false)
+onMounted(() => {
+  provenanceBadgeMounted.value = true
+})
 
 // Keep latestVersion for comparison (to show "(latest)" badge)
 const latestVersion = computed(() => {
@@ -523,16 +557,26 @@ defineOgImageComponent('Package', {
             >
             <span v-else>v{{ resolvedVersion }}</span>
 
-            <a
-              v-if="hasProvenance(displayVersion)"
-              :href="`https://www.npmjs.com/package/${pkg.name}/v/${resolvedVersion}#provenance`"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center justify-center gap-1.5 text-fg-muted hover:text-fg transition-colors duration-200 min-w-6 min-h-6"
-              :title="$t('package.verified_provenance')"
-            >
-              <span class="i-lucide-shield-check w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            </a>
+            <template v-if="hasProvenance(displayVersion) && provenanceBadgeMounted">
+              <TooltipApp
+                :text="
+                  provenanceData && provenanceStatus !== 'pending'
+                    ? $t('package.provenance_section.built_and_signed_on', {
+                        provider: provenanceData.providerLabel,
+                      })
+                    : $t('package.verified_provenance')
+                "
+                position="bottom"
+              >
+                <a
+                  href="#provenance"
+                  :aria-label="$t('package.provenance_section.view_more_details')"
+                  class="inline-flex items-center justify-center gap-1.5 text-fg-muted hover:text-emerald-500 transition-colors duration-200 min-w-6 min-h-6"
+                >
+                  <span class="i-lucide-shield-check w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                </a>
+              </TooltipApp>
+            </template>
             <span
               v-if="requestedVersion && latestVersion && resolvedVersion !== latestVersion.version"
               class="text-fg-subtle text-sm shrink-0"
@@ -1086,11 +1130,42 @@ defineOgImageComponent('Package', {
             >{{ $t('package.readme.view_on_github') }}</a
           >
         </p>
-      </section>
 
+        <section
+          v-if="hasProvenance(displayVersion) && provenanceBadgeMounted"
+          id="provenance"
+          class="scroll-mt-20"
+        >
+          <div
+            v-if="provenanceStatus === 'pending'"
+            class="mt-8 flex items-center gap-2 text-fg-subtle text-sm"
+          >
+            <span
+              class="i-carbon-circle-dash w-4 h-4 motion-safe:animate-spin"
+              aria-hidden="true"
+            />
+            <span>{{ $t('package.provenance_section.title') }}…</span>
+          </div>
+          <PackageProvenanceSection
+            v-else-if="provenanceData"
+            :details="provenanceData"
+            class="mt-8"
+          />
+          <!-- Error state: provenance exists but details failed to load -->
+          <div
+            v-else-if="provenanceStatus === 'error'"
+            class="mt-8 flex items-center gap-2 text-fg-subtle text-sm"
+          >
+            <span class="i-carbon:warning w-4 h-4" aria-hidden="true" />
+            <span>{{ $t('package.provenance_section.error_loading') }}</span>
+          </div>
+        </section>
+      </section>
       <div class="area-sidebar">
         <!-- Sidebar -->
-        <div class="sticky top-34 space-y-6 sm:space-y-8 min-w-0 overflow-hidden xl:(top-22) pt-1">
+        <div
+          class="sidebar-scroll sticky top-34 space-y-6 sm:space-y-8 min-w-0 overflow-y-auto pr-2.5 hover:pr-0.5 lg:(max-h-[calc(100dvh-8.5rem)] overscroll-contain) xl:(top-22 pt-2 max-h-[calc(100dvh-6rem)])"
+        >
           <!-- Maintainers (with admin actions when connected) -->
           <PackageMaintainers :package-name="pkg.name" :maintainers="pkg.maintainers" />
 
@@ -1237,6 +1312,41 @@ defineOgImageComponent('Package', {
 
 .area-sidebar {
   grid-area: sidebar;
+}
+
+/* Sidebar scrollbar: hidden by default, shown on hover/focus */
+@media (min-width: 1024px) {
+  .sidebar-scroll {
+    scrollbar-gutter: stable;
+    scrollbar-width: none;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .sidebar-scroll:hover,
+  .sidebar-scroll:focus-within {
+    scrollbar-width: auto;
+  }
+
+  .sidebar-scroll:hover::-webkit-scrollbar,
+  .sidebar-scroll:focus-within::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .sidebar-scroll:hover::-webkit-scrollbar-thumb,
+  .sidebar-scroll:focus-within::-webkit-scrollbar-thumb {
+    background-color: #cecece;
+    border-radius: 9999px;
+  }
+
+  .sidebar-scroll:hover::-webkit-scrollbar-track,
+  .sidebar-scroll:focus-within::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 /* Improve package name wrapping for narrow screens */

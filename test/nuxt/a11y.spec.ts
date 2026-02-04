@@ -103,6 +103,7 @@ import {
   HeaderSearchBox,
   LicenseDisplay,
   LoadingSpinner,
+  PackageProvenanceSection,
   OrgMembersPanel,
   OrgOperationsQueue,
   OrgTeamsPanel,
@@ -943,6 +944,40 @@ describe('component accessibility audits', () => {
         props: {
           packageName: 'test-package',
           open: true,
+        },
+      })
+      const results = await runAxe(component)
+      expect(results.violations).toEqual([])
+    })
+  })
+
+  describe('PackageProvenanceSection', () => {
+    it('should have no accessibility violations with minimal details', async () => {
+      const component = await mountSuspended(PackageProvenanceSection, {
+        props: {
+          details: {
+            provider: 'github',
+            providerLabel: 'GitHub Actions',
+          },
+        },
+      })
+      const results = await runAxe(component)
+      expect(results.violations).toEqual([])
+    })
+
+    it('should have no accessibility violations with full details', async () => {
+      const component = await mountSuspended(PackageProvenanceSection, {
+        props: {
+          details: {
+            provider: 'github',
+            providerLabel: 'GitHub Actions',
+            buildSummaryUrl: 'https://github.com/owner/repo/actions/runs/123',
+            sourceCommitUrl: 'https://github.com/owner/repo/commit/abc123',
+            sourceCommitSha: 'abc123def456',
+            buildFileUrl: 'https://github.com/owner/repo/blob/main/.github/workflows/release.yml',
+            buildFilePath: '.github/workflows/release.yml',
+            publicLedgerUrl: 'https://search.sigstore.dev/example',
+          },
         },
       })
       const results = await runAxe(component)
