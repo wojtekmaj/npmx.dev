@@ -204,7 +204,14 @@
       "title": "README",
       "no_readme": "Brak README.",
       "view_on_github": "Zobacz na GitHub",
-      "toc_title": "Spis treści"
+      "toc_title": "Spis treści",
+      "callout": {
+        "note": "notatka",
+        "tip": "wskazówka",
+        "important": "ważne",
+        "warning": "uwaga",
+        "caution": "ostrożnie"
+      }
     },
     "keywords_title": "Słowa kluczowe",
     "compatibility": "Zgodność",
