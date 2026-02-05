@@ -326,7 +326,7 @@ function computeFacetValue(
       }
       return {
         raw: engines.node,
-        display: `Node ${engines.node}`,
+        display: `Node.js ${engines.node}`,
         status: 'neutral',
       }
     }
