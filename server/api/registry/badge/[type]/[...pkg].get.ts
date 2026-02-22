@@ -35,15 +35,34 @@ const COLORS = {
   white: '#ffffff',
 }
 
-const CHAR_WIDTH = 7
-const SHIELDS_CHAR_WIDTH = 6
-
 const BADGE_PADDING_X = 8
 const MIN_BADGE_TEXT_WIDTH = 40
 const SHIELDS_LABEL_PADDING_X = 5
 
 const BADGE_FONT_SHORTHAND = 'normal normal 400 11px Geist, system-ui, -apple-system, sans-serif'
 const SHIELDS_FONT_SHORTHAND = 'normal normal 400 11px Verdana, Geneva, DejaVu Sans, sans-serif'
+
+type FontFallbackCharWidths = {
+  default: number
+  long: number
+  short: number
+}
+
+const FALLBACK_FONT_CHAR_WIDTHS: Record<string, FontFallbackCharWidths> = {
+  [BADGE_FONT_SHORTHAND]: {
+    short: 4,
+    default: 7,
+    long: 9,
+  },
+  [SHIELDS_FONT_SHORTHAND]: {
+    short: 3,
+    default: 6,
+    long: 8,
+  },
+}
+
+const LONG_LETTERS = new Set(['m', 'w'])
+const SHORT_LETTERS = new Set(['i', 'l', 'j', 't', 'f', 'r'])
 
 let cachedCanvasContext: SKRSContext2D | null | undefined
 
@@ -61,7 +80,32 @@ function getCanvasContext(): SKRSContext2D | null {
   return cachedCanvasContext
 }
 
-function measureTextWidth(text: string, font: string): number | null {
+function measureTextWidthWithoutCanvas(text: string, font: string): number {
+  const fallbackWidths =
+    FALLBACK_FONT_CHAR_WIDTHS[font] ?? FALLBACK_FONT_CHAR_WIDTHS[BADGE_FONT_SHORTHAND]
+
+  let totalWidth = 0
+
+  for (const character of text) {
+    const lowerCaseCharacter = character.toLowerCase()
+
+    if (LONG_LETTERS.has(lowerCaseCharacter)) {
+      totalWidth += fallbackWidths.long
+      continue
+    }
+
+    if (SHORT_LETTERS.has(lowerCaseCharacter)) {
+      totalWidth += fallbackWidths.short
+      continue
+    }
+
+    totalWidth += fallbackWidths.default
+  }
+
+  return Math.ceil(totalWidth)
+}
+
+function measureTextWidth(text: string, font: string): number {
   const context = getCanvasContext()
 
   if (context) {
@@ -74,27 +118,19 @@ function measureTextWidth(text: string, font: string): number | null {
     }
   }
 
-  return null
+  return measureTextWidthWithoutCanvas(text, font)
 }
 
 function measureDefaultTextWidth(text: string): number {
   const measuredWidth = measureTextWidth(text, BADGE_FONT_SHORTHAND)
 
-  if (measuredWidth !== null) {
-    return Math.max(MIN_BADGE_TEXT_WIDTH, measuredWidth + BADGE_PADDING_X * 2)
-  }
-
-  return Math.max(MIN_BADGE_TEXT_WIDTH, Math.round(text.length * CHAR_WIDTH) + BADGE_PADDING_X * 2)
+  return Math.max(MIN_BADGE_TEXT_WIDTH, measuredWidth + BADGE_PADDING_X * 2)
 }
 
 function measureShieldsTextLength(text: string): number {
   const measuredWidth = measureTextWidth(text, SHIELDS_FONT_SHORTHAND)
 
-  if (measuredWidth !== null) {
-    return Math.max(1, measuredWidth)
-  }
-
-  return Math.max(1, Math.round(text.length * SHIELDS_CHAR_WIDTH))
+  return Math.max(1, measuredWidth)
 }
 
 function renderDefaultBadgeSvg(params: {
