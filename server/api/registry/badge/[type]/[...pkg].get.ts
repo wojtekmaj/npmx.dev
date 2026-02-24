@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { createCanvas, type SKRSContext2D } from '@napi-rs/canvas'
+import { createCanvas, type CanvasRenderingContext2D } from 'canvas'
 import { hash } from 'ohash'
 import { createError, getRouterParam, getQuery, setHeader } from 'h3'
 import { PackageRouteParamsSchema } from '#shared/schemas/package'
@@ -45,9 +45,9 @@ const SHIELDS_LABEL_PADDING_X = 5
 const BADGE_FONT_SHORTHAND = 'normal normal 400 11px Geist, system-ui, -apple-system, sans-serif'
 const SHIELDS_FONT_SHORTHAND = 'normal normal 400 11px Verdana, Geneva, DejaVu Sans, sans-serif'
 
-let cachedCanvasContext: SKRSContext2D | null | undefined
+let cachedCanvasContext: CanvasRenderingContext2D | null | undefined
 
-function getCanvasContext(): SKRSContext2D | null {
+function getCanvasContext(): CanvasRenderingContext2D | null {
   if (cachedCanvasContext !== undefined) {
     return cachedCanvasContext
   }

@@ -17,6 +17,7 @@ ignoredBuiltDependencies:
 onlyBuiltDependencies:
   - '@resvg/resvg-js'
   - better-sqlite3
+  - canvas
   - sharp@0.34.5
   - simple-git-hooks@2.13.1
 
